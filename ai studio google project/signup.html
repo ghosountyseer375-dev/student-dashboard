@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up - Student Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h2>Create Account</h2>
+            <form id="signupForm">
+                <div class="form-group"><label>Full Name</label><input type="text" id="name" required></div>
+                <div class="form-group"><label>Email</label><input type="email" id="email" required></div>
+                <div class="form-group"><label>Password</label><input type="password" id="password" required minlength="6"></div>
+                <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPassword" required></div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group"><label>Date of Birth</label><input type="date" id="dob" required></div>
+                    <div class="form-group"><label>Nationality</label><input type="text" id="nationality" required></div>
+                </div>
+                
+                <div class="form-group"><label>Major</label><input type="text" id="major" required></div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign Up</button>
+            </form>
+            <p style="margin-top: 1rem; text-align: center;">Already have an account? <a href="signin.html">Sign In</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (pass !== confirm) return alert("Passwords do not match!");
+
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const email = document.getElementById('email').value;
+
+            if (users.find(u => u.email === email)) return alert("Email already exists!");
+
+            const newUser = {
+                name: document.getElementById('name').value,
+                email: email,
+                password: pass,
+                dob: document.getElementById('dob').value,
+                major: document.getElementById('major').value,
+                nationality: document.getElementById('nationality').value,
+                profilePic: "" // فارغ حالياً
+            };
+
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            alert("Registration successful!");
+            window.location.href = 'signin.html';
+        });
+    </script>
+</body>
+</html>

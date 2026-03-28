@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Courses - Student Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* تنسيقات إضافية خاصة بصفحة الكورسات */
+        .filter-section {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid var(--border-color);
+        }
+
+        /* تنسيق الـ Modal (نافذة الإضافة والتعديل) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- مكان القائمة الجانبية (سيتم حقنها بواسطة script.js) -->
+    <div id="sidebar-placeholder"></div>
+
+    <main id="main-content">
+        <div class="flex-between">
+            <h1>My Courses</h1>
+            <button class="btn btn-primary" onclick="openModal()">+ Add New Course</button>
+        </div>
+
+        <!-- قسم الفلترة -->
+        <div class="filter-section mt-2">
+            <span>Filter by Status:</span>
+            <select id="statusFilter" onchange="renderCourses()" style="width: auto; padding: 5px 15px;">
+                <option value="All">All Courses</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Dropped">Dropped</option>
+            </select>
+        </div>
+
+        <!-- جدول الكورسات -->
+        <div class="table-container">
+            <table id="coursesTable">
+                <thead>
+                    <tr>
+                        <th>Course Name</th>
+                        <th>Credits</th>
+                        <th>Time</th>
+                        <th>Instructor</th>
+                        <th>Classroom</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="coursesList">
+                    <!-- البيانات ستظهر هنا بواسطة JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal إضافة/تعديل كورس -->
+    <div class="modal-overlay" id="courseModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add New Course</h2>
+            <form id="courseForm" class="mt-2">
+                <input type="hidden" id="editIndex">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Course Name</label>
+                        <input type="text" id="courseName" required placeholder="e.g. Computer Science 101">
+                    </div>
+                    <div class="form-group">
+                        <label>Credit Hours</label>
+                        <input type="number" id="creditHours" required min="1" max="6">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" id="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="time" id="endTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Instructor</label>
+                        <input type="text" id="instructor" required placeholder="Dr. Smith">
+                    </div>
+                    <div class="form-group">
+                        <label>Classroom</label>
+                        <input type="text" id="classroom" required placeholder="Lab 04 or Room 202">
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="courseStatus">
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Dropped">Dropped</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // 1. التحقق من المستخدم وجلب بياناته
+        const user = checkAuth();
+        
+        function getUserData(email) {
+            const data = localStorage.getItem(`data_${email}`);
+            return data ? JSON.parse(data) : { courses: [], assignments: [] };
+        }
+
+        function saveUserData(email, data) {
+            localStorage.setItem(`data_${email}`, JSON.stringify(data));
+        }
+
+        let userData = getUserData(user.email);
+
+        // 2. وظائف الـ Modal
+        function openModal(editIndex = -1) {
+            const modal = document.getElementById('courseModal');
+            const form = document.getElementById('courseForm');
+            modal.style.display = 'flex';
+            
+            if (editIndex > -1) {
+                // وضع التعديل
+                document.getElementById('modalTitle').innerText = "Edit Course";
+                const c = userData.courses[editIndex];
+                document.getElementById('editIndex').value = editIndex;
+                document.getElementById('courseName').value = c.name;
+                document.getElementById('creditHours').value = c.credits;
+                document.getElementById('startTime').value = c.start;
+                document.getElementById('endTime').value = c.end;
+                document.getElementById('instructor').value = c.instructor;
+                document.getElementById('classroom').value = c.classroom;
+                document.getElementById('courseStatus').value = c.status;
+            } else {
+                // وضع الإضافة
+                document.getElementById('modalTitle').innerText = "Add New Course";
+                form.reset();
+                document.getElementById('editIndex').value = -1;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('courseModal').style.display = 'none';
+        }
+
+        // 3. حفظ البيانات (إضافة أو تعديل)
+        document.getElementById('courseForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const idx = document.getElementById('editIndex').value;
+            
+            const courseObj = {
+                name: document.getElementById('courseName').value,
+                credits: document.getElementById('creditHours').value,
+                start: document.getElementById('startTime').value,
+                end: document.getElementById('endTime').value,
+                instructor: document.getElementById('instructor').value,
+                classroom: document.getElementById('classroom').value,
+                status: document.getElementById('courseStatus').value
+            };
+
+            if (idx == -1) {
+                userData.courses.push(courseObj);
+            } else {
+                userData.courses[idx] = courseObj;
+            }
+
+            saveUserData(user.email, userData);
+            closeModal();
+            renderCourses();
+        });
+
+        // 4. حذف كورس
+        function deleteCourse(index) {
+            if (confirm("Are you sure you want to delete this course?")) {
+                userData.courses.splice(index, 1);
+                saveUserData(user.email, userData);
+                renderCourses();
+            }
+        }
+
+        // 5. عرض الكورسات مع الفلترة
+        function renderCourses() {
+            const filterValue = document.getElementById('statusFilter').value;
+            const tbody = document.getElementById('coursesList');
+            tbody.innerHTML = '';
+
+            userData.courses.forEach((course, index) => {
+                // الفلترة
+                if (filterValue !== "All" && course.status !== filterValue) return;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>${course.name}</b></td>
+                    <td>${course.credits} hrs</td>
+                    <td>${course.start} - ${course.end}</td>
+                    <td>${course.instructor}</td>
+                    <td>${course.classroom}</td>
+                    <td><span class="badge badge-${course.status.toLowerCase().replace(' ','')}">${course.status}</span></td>
+                    <td class="action-btns">
+                        <button onclick="openModal(${index})" class="btn" style="padding: 5px 10px; background: #4cc9f0; color: white;">Edit</button>
+                        <button onclick="deleteCourse(${index})" class="btn btn-danger" style="padding: 5px 10px;">Del</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (tbody.innerHTML === '') {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No courses found</td></tr>';
+            }
+        }
+
+        // التشغيل عند التحميل
+        renderCourses();
+    </script>
+    <script src="script.js"></script>
+    
+</body>
+</html>

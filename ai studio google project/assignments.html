@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignments - Student Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .status-select {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-color);
+            cursor: pointer;
+        }
+        
+        .urgent-deadline { color: var(--danger); font-weight: bold; }
+
+        /* تنسيق الـ Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border-color);
+        }
+        .action-btns { display: flex; gap: 5px; }
+    </style>
+</head>
+<body>
+    <div id="sidebar-placeholder"></div>
+
+    <main id="main-content">
+        <div class="flex-between">
+            <h1>Assignments Tracker</h1>
+            <button class="btn btn-primary" onclick="openModal()">+ Add New Assignment</button>
+        </div>
+
+        <div class="table-container mt-2">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Course</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="assignmentsList">
+                    <!-- البيانات ستظهر هنا -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal لإضافة وتعديل الواجب -->
+    <div class="modal-overlay" id="assignmentModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add New Assignment</h2>
+            <form id="assignmentForm" class="mt-2">
+                <input type="hidden" id="editIndex" value="-1">
+                
+                <div class="form-group">
+                    <label>Assignment Title</label>
+                    <input type="text" id="assTitle" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Associated Course</label>
+                    <select id="assCourse" required>
+                        <option value="">-- Select Course --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Deadline</label>
+                    <input type="date" id="assDeadline" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="assStatus">
+                        <option value="To Do">To Do</option>
+                        <option value="Doing">Doing</option>
+                        <option value="Done">Done</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">Save Assignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const user = checkAuth();
+        
+        function getUserData(email) {
+            const data = localStorage.getItem(`data_${email}`);
+            return data ? JSON.parse(data) : { courses: [], assignments: [] };
+        }
+
+        function saveUserData(email, data) {
+            localStorage.setItem(`data_${email}`, JSON.stringify(data));
+        }
+
+        let userData = getUserData(user.email);
+
+        // 1. فتح وإغلاق الـ Modal
+        function openModal(index = -1) {
+            const modal = document.getElementById('assignmentModal');
+            const form = document.getElementById('assignmentForm');
+            populateCourseSelect(); // تحديث قائمة الكورسات
+            
+            modal.style.display = 'flex';
+            
+            if (index > -1) {
+                // وضع التعديل: ملء الحقول بالبيانات الحالية
+                document.getElementById('modalTitle').innerText = "Edit Assignment";
+                document.getElementById('editIndex').value = index;
+                const ass = userData.assignments[index];
+                document.getElementById('assTitle').value = ass.title;
+                document.getElementById('assCourse').value = ass.course;
+                document.getElementById('assDeadline').value = ass.deadline;
+                document.getElementById('assStatus').value = ass.status;
+            } else {
+                // وضع الإضافة: تفريغ الحقول
+                document.getElementById('modalTitle').innerText = "Add New Assignment";
+                document.getElementById('editIndex').value = -1;
+                form.reset();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('assignmentModal').style.display = 'none';
+        }
+
+        // 2. تحديث قائمة الكورسات في المودال
+        function populateCourseSelect() {
+            const select = document.getElementById('assCourse');
+            select.innerHTML = '<option value="">-- Select Course --</option>';
+            userData.courses.forEach(course => {
+                const opt = document.createElement('option');
+                opt.value = course.name;
+                opt.textContent = course.name;
+                select.appendChild(opt);
+            });
+        }
+
+        // 3. حفظ الواجب (إضافة أو تعديل)
+        document.getElementById('assignmentForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const idx = document.getElementById('editIndex').value;
+            
+            const assObj = {
+                title: document.getElementById('assTitle').value,
+                course: document.getElementById('assCourse').value,
+                deadline: document.getElementById('assDeadline').value,
+                status: document.getElementById('assStatus').value
+            };
+
+            if (idx == -1) {
+                userData.assignments.push(assObj);
+            } else {
+                userData.assignments[idx] = assObj;
+            }
+
+            saveUserData(user.email, userData);
+            closeModal();
+            renderAssignments();
+        });
+
+        // 4. حذف واجب
+        function deleteAssignment(index) {
+            if(confirm("Are you sure?")) {
+                userData.assignments.splice(index, 1);
+                saveUserData(user.email, userData);
+                renderAssignments();
+            }
+        }
+
+        // 5. تعديل الحالة السريع من الجدول مباشرة
+        function quickUpdateStatus(index, newStatus) {
+            userData.assignments[index].status = newStatus;
+            saveUserData(user.email, userData);
+            renderAssignments();
+        }
+
+        // 6. عرض الواجبات
+        function renderAssignments() {
+            const tbody = document.getElementById('assignmentsList');
+            tbody.innerHTML = '';
+
+            userData.assignments.forEach((ass, index) => {
+                const today = new Date();
+                const deadline = new Date(ass.deadline);
+                const isUrgent = (deadline - today) < (86400000 * 2) && ass.status !== 'Done';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${ass.title}</b></td>
+                        <td>${ass.course}</td>
+                        <td class="${isUrgent ? 'urgent-deadline' : ''}">${ass.deadline}</td>
+                        <td>
+                            <select class="status-select" onchange="quickUpdateStatus(${index}, this.value)">
+                                <option value="To Do" ${ass.status === 'To Do' ? 'selected' : ''}>To Do</option>
+                                <option value="Doing" ${ass.status === 'Doing' ? 'selected' : ''}>Doing</option>
+                                <option value="Done" ${ass.status === 'Done' ? 'selected' : ''}>Done</option>
+                            </select>
+                        </td>
+                        <td class="action-btns">
+                            <button onclick="openModal(${index})" class="btn" style="background:#4cc9f0; color:white; padding:5px 10px;">Edit</button>
+                            <button onclick="deleteAssignment(${index})" class="btn btn-danger" style="padding:5px 10px;">Del</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (userData.assignments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No assignments found.</td></tr>';
+            }
+        }
+
+        renderAssignments();
+    </script>
+      <script src="script.js"></script>
+</body>
+</html>

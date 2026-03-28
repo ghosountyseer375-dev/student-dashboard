@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Info - Student Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* التنسيقات الأصلية التي تفضلينها */
+        .profile-container {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 600px;
+            margin: 2rem auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        .profile-img-large {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--primary-color);
+            margin-bottom: 1.5rem;
+            background-color: #f0f0f0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1.2rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.3s;
+        }
+        .info-row:hover {
+            background: rgba(0,0,0,0.02);
+        }
+        .info-label { 
+            font-weight: bold; 
+            color: var(--primary-color); 
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        .info-value {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+        h1 { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <!-- استخدام الـ placeholder لضمان ظهور السايد بار الموحد من script.js -->
+    <div id="sidebar-placeholder"></div>
+
+    <main id="main-content">
+        <header class="flex-between">
+            <h1>Student Profile</h1>
+        </header>
+
+        <div class="profile-container">
+            <!-- الصورة الشخصية (التي تم رفعها عند التسجيل) -->
+            <img src="https://via.placeholder.com/160" id="displayPic" class="profile-img-large" alt="Profile Picture">
+            
+            <h2 id="displayName" style="margin-bottom: 0.2rem;">Loading...</h2>
+            <p id="displayMajor" style="color: gray; margin-bottom: 2rem; font-style: italic;">Major Name</p>
+
+            <div class="info-row">
+                <span class="info-label">Email Address</span>
+                <span id="displayEmail" class="info-value">---</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Date of Birth</span>
+                <span id="displayDOB" class="info-value">---</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Nationality</span>
+                <span id="displayNationality" class="info-value">---</span>
+            </div>
+            <div class="info-row" style="border-bottom: none;">
+                <span class="info-label">Current Major</span>
+                <span id="displayMajorDetail" class="info-value">---</span>
+            </div>
+            
+            <a href="profile-edit.html" class="btn btn-primary" style="display: inline-block; margin-top: 2rem; text-decoration: none; width: 100%;">Edit Profile Info</a>
+        </div>
+    </main>
+
+    <!-- استدعاء ملف الجافاسكريبت الموحد مرة واحدة فقط -->
+    <script src="script.js"></script>
+    
+    <script>
+        // 1. التأكد من أن المستخدم مسجل دخول
+        const userSession = checkAuth();
+        
+        if (userSession) {
+            // 2. جلب مصفوفة المستخدمين كاملة من localStorage
+            const allUsers = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            // 3. البحث عن بيانات المستخدم الحالي بالتفصيل باستخدام الإيميل
+            const currentUserData = allUsers.find(u => u.email === userSession.email);
+
+            if (currentUserData) {
+                // الاسم والتخصص في الأعلى
+                document.getElementById('displayName').innerText = currentUserData.name;
+                document.getElementById('displayMajor').innerText = currentUserData.major;
+
+                // تفاصيل الجدول
+                document.getElementById('displayEmail').innerText = currentUserData.email;
+                document.getElementById('displayDOB').innerText = currentUserData.dob || 'Not Provided';
+                document.getElementById('displayNationality').innerText = currentUserData.nationality || 'Not Provided';
+                document.getElementById('displayMajorDetail').innerText = currentUserData.major;
+                
+                // عرض الصورة الشخصية (إذا وجدت في البيانات المشفرة Base64)
+                if (currentUserData.profilePic && currentUserData.profilePic !== "") {
+                    document.getElementById('displayPic').src = currentUserData.profilePic;
+                } else {
+                    // صورة افتراضية في حال لم يرفع المستخدم صورة
+                    document.getElementById('displayPic').src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUserData.name) + "&background=4361ee&color=fff&size=160";
+                }
+            }
+        }
+    </script>
+     <script src="script.js"></script>
+</body>
+</html>

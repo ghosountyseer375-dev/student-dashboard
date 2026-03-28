@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Student Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="sidebar-placeholder"></div>
+
+    <main id="main-content">
+        <header class="flex-between">
+            <div>
+                <h1 id="welcomeText">Welcome</h1>
+                <p id="dateDisplay" style="color: gray;"></p>
+            </div>
+        </header>
+
+        <!-- الإحصائيات الأربعة (Total, Completed, In Progress, Dropped) -->
+        <div class="stats-grid mt-2">
+            <div class="stat-card">
+                <small>Total Courses</small>
+                <h2 id="stat-total">0</h2>
+            </div>
+            <div class="stat-card" style="border-left-color: var(--success)">
+                <small>Completed</small>
+                <h2 id="stat-completed">0</h2>
+            </div>
+            <div class="stat-card" style="border-left-color: var(--warning)">
+                <small>In Progress</small>
+                <h2 id="stat-progress">0</h2>
+            </div>
+            <div class="stat-card" style="border-left-color: var(--danger)">
+                <small>Dropped</small>
+                <h2 id="stat-dropped">0</h2>
+            </div>
+        </div>
+
+        <h3 class="mt-2">Upcoming Assignments</h3>
+        <div class="table-container mt-2">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="upcoming-assignments">
+                    <!-- سيتم التحميل بواسطة JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        // التحقق من الجلسة
+        const user = checkAuth();
+        
+        if (user) {
+            document.getElementById('welcomeText').innerText = `Welcome, ${user.name}!`;
+            document.getElementById('dateDisplay').innerText = new Date().toDateString();
+
+            const data = getUserData(user.email);
+            
+            // تحديث الإحصائيات
+            document.getElementById('stat-total').innerText = data.courses.length;
+            document.getElementById('stat-completed').innerText = data.courses.filter(c => c.status === 'Completed').length;
+            document.getElementById('stat-progress').innerText = data.courses.filter(c => c.status === 'In Progress').length;
+            document.getElementById('stat-dropped').innerText = data.courses.filter(c => c.status === 'Dropped').length;
+
+            // عرض الواجبات (أقرب 5)
+            const tbody = document.getElementById('upcoming-assignments');
+            const sorted = data.assignments.sort((a, b) => new Date(a.deadline) - new Date(b.deadline)).slice(0, 5);
+            
+            if (sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No pending assignments</td></tr>';
+            } else {
+                sorted.forEach(task => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${task.title}</td>
+                            <td>${task.deadline}</td>
+                            <td>${task.status}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+    </script>
+</body>
+</html>

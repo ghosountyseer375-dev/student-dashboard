@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Student Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .edit-container {
+            max-width: 700px;
+            margin: 2rem auto;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .full-width { grid-column: span 2; }
+        .section-title {
+            grid-column: span 2;
+            margin-top: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--primary-color);
+            font-size: 1rem;
+            color: var(--primary-color);
+        }
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .full-width, .section-title { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar-placeholder"></div>
+
+    <main id="main-content">
+        <h1>Edit Profile Settings</h1>
+        
+        <div class="edit-container">
+            <form id="editForm">
+                <!-- قسم الصورة الشخصية -->
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="position: relative; display: inline-block;">
+                        <img src="https://via.placeholder.com/120" id="editPreview" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border: 3px solid var(--primary-color);">
+                        <label for="fileInput" style="position: absolute; bottom: 0; right: 0; background: var(--primary-color); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white;">
+                            📷
+                        </label>
+                    </div>
+                    <input type="file" id="fileInput" hidden accept="image/*">
+                </div>
+
+                <div class="form-grid">
+                    <h3 class="section-title">Personal Information</h3>
+                    <div class="form-group full-width">
+                        <label>Full Name</label>
+                        <input type="text" id="editName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Major</label>
+                        <input type="text" id="editMajor" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nationality</label>
+                        <input type="text" id="editNationality" required>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Date of Birth</label>
+                        <input type="date" id="editDOB" required>
+                    </div>
+
+                    <h3 class="section-title">Account Credentials</h3>
+                    <div class="form-group full-width">
+                        <label>Email Address (Careful: This is your login ID)</label>
+                        <input type="email" id="editEmail" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="editPass" placeholder="Leave blank to keep current">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="editPassConfirm" placeholder="Confirm new password">
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">Save Changes</button>
+                    <button type="button" onclick="window.location.href='profile.html'" class="btn" style="flex: 1; background: #eee; color: black;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+
+    <script>
+        const loggedInUser = checkAuth();
+        
+        if (loggedInUser) {
+            let users = JSON.parse(localStorage.getItem('users') || '[]');
+            let userIndex = users.findIndex(u => u.email === loggedInUser.email);
+            
+            if (userIndex !== -1) {
+                let currentUser = users[userIndex];
+                let base64Img = currentUser.profilePic || "";
+                const oldEmail = currentUser.email;
+
+                // تعبئة البيانات الحالية
+                document.getElementById('editName').value = currentUser.name;
+                document.getElementById('editMajor').value = currentUser.major;
+                document.getElementById('editDOB').value = currentUser.dob;
+                document.getElementById('editNationality').value = currentUser.nationality;
+                document.getElementById('editEmail').value = currentUser.email;
+                if (base64Img) document.getElementById('editPreview').src = base64Img;
+
+                // معالجة الصورة
+                document.getElementById('fileInput').addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            base64Img = event.target.result;
+                            document.getElementById('editPreview').src = base64Img;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                // حفظ البيانات
+                document.getElementById('editForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const newEmail = document.getElementById('editEmail').value;
+                    const newPass = document.getElementById('editPass').value;
+                    const confirmPass = document.getElementById('editPassConfirm').value;
+
+                    // 1. التحقق من تطابق كلمة المرور الجديدة
+                    if (newPass !== "" && newPass !== confirmPass) {
+                        alert("Passwords do not match!");
+                        return;
+                    }
+
+                    // 2. التحقق من أن الإيميل الجديد غير مستخدم من شخص آخر
+                    if (newEmail !== oldEmail) {
+                        const emailExists = users.some(u => u.email === newEmail);
+                        if (emailExists) {
+                            alert("This email is already taken by another user!");
+                            return;
+                        }
+                        
+                        // نقل بيانات الكورسات والواجبات للإيميل الجديد
+                        const oldData = localStorage.getItem(`data_${oldEmail}`);
+                        if (oldData) {
+                            localStorage.setItem(`data_${newEmail}`, oldData);
+                            localStorage.removeItem(`data_${oldEmail}`);
+                        }
+                    }
+
+                    // 3. تحديث الكائن
+                    users[userIndex].name = document.getElementById('editName').value;
+                    users[userIndex].major = document.getElementById('editMajor').value;
+                    users[userIndex].dob = document.getElementById('editDOB').value;
+                    users[userIndex].nationality = document.getElementById('editNationality').value;
+                    users[userIndex].email = newEmail;
+                    users[userIndex].profilePic = base64Img;
+                    
+                    if (newPass !== "") {
+                        users[userIndex].password = newPass;
+                    }
+
+                    // 4. الحفظ النهائي
+                    localStorage.setItem('users', JSON.stringify(users));
+                    sessionStorage.setItem('currentUser', JSON.stringify(users[userIndex]));
+
+                    alert("Profile updated successfully!");
+                    window.location.href = 'profile.html';
+                });
+            }
+        }
+    </script>
+</body>
+</html>
