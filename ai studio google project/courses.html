@@ -18,7 +18,7 @@
             border: 1px solid var(--border-color);
         }
 
-        /* تنسيق الـ Modal (نافذة الإضافة والتعديل) */
+        
         .modal-overlay {
             display: none;
             position: fixed;
@@ -56,7 +56,7 @@
     </style>
 </head>
 <body>
-    <!-- مكان القائمة الجانبية (سيتم حقنها بواسطة script.js) -->
+    
     <div id="sidebar-placeholder"></div>
 
     <main id="main-content">
@@ -97,7 +97,7 @@
         </div>
     </main>
 
-    <!-- Modal إضافة/تعديل كورس -->
+    <!--  إضافة/تعديل كورس -->
     <div class="modal-overlay" id="courseModal">
         <div class="modal-content">
             <h2 id="modalTitle">Add New Course</h2>
@@ -168,7 +168,7 @@
             modal.style.display = 'flex';
             
             if (editIndex > -1) {
-                // وضع التعديل
+                // التعديل
                 document.getElementById('modalTitle').innerText = "Edit Course";
                 const c = userData.courses[editIndex];
                 document.getElementById('editIndex').value = editIndex;
@@ -180,7 +180,7 @@
                 document.getElementById('classroom').value = c.classroom;
                 document.getElementById('courseStatus').value = c.status;
             } else {
-                // وضع الإضافة
+                // الإضافة
                 document.getElementById('modalTitle').innerText = "Add New Course";
                 form.reset();
                 document.getElementById('editIndex').value = -1;

@@ -15,19 +15,19 @@ function logout() {
 }
 
 // 3. الوضع الليلي
-function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-}
+function initTheme() {  
+    const savedTheme = localStorage.getItem('theme') || 'light';   
+    document.documentElement.setAttribute('data-theme', savedTheme); // يضيف attribute للـ <html>
+} 
 
 function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme');
     const newTheme = current === 'light' ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
+    localStorage.setItem('theme', newTheme); //يحفظ الثيم  حتى يبقى بعد تسجيل الخروج
 }
 
-// 4. رسم السايد بار (Placeholder)
+// 4. السايد بار 
 function renderSidebar() {
     const container = document.getElementById('sidebar-placeholder');
     if (!container) return;

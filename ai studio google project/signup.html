@@ -30,7 +30,7 @@
 
     <script>
         document.getElementById('signupForm').addEventListener('submit', (e) => {
-            e.preventDefault();
+            e.preventDefault();//يمنع الصفحة من إعادة التحميل (Refresh)، لكي نتمكن من معالجة البيانات برمجياً وحفظها في المتصفح 
             const pass = document.getElementById('password').value;
             const confirm = document.getElementById('confirmPassword').value;
 
@@ -48,7 +48,7 @@
                 dob: document.getElementById('dob').value,
                 major: document.getElementById('major').value,
                 nationality: document.getElementById('nationality').value,
-                profilePic: "" // فارغ حالياً
+                profilePic: "" // فارغه في البدايه وتضاف عند عمل edit profile 
             };
 
             users.push(newUser);
@@ -57,5 +57,6 @@
             window.location.href = 'signin.html';
         });
     </script>
+     
 </body>
 </html>

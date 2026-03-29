@@ -135,7 +135,7 @@
                         };
                         reader.readAsDataURL(file);
                     }
-                });
+                });  
 
                 // حفظ البيانات
                 document.getElementById('editForm').addEventListener('submit', (e) => {
@@ -152,8 +152,8 @@
                     }
 
                     // 2. التحقق من أن الإيميل الجديد غير مستخدم من شخص آخر
-                    if (newEmail !== oldEmail) {
-                        const emailExists = users.some(u => u.email === newEmail);
+                    if (newEmail !== oldEmail) { //هل المستخدم غيّر الإيميل؟, اذا لم يغيره لا يتحقق من الشرط
+                        const emailExists = users.some(u => u.email === newEmail); //some:وظيفتها تتحقق هل يوجد عنصر واحد على الاقل في المصفوفه يحقق الشرط 
                         if (emailExists) {
                             alert("This email is already taken by another user!");
                             return;
